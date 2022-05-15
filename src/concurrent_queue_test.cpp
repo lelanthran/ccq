@@ -1,6 +1,8 @@
 
 #include <cstdio>
 
+#include "concurrentqueue.h"
+
 int main (int argc, char **argv)
 {
    (void)argc;
