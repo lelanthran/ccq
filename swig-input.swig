@@ -1,9 +1,7 @@
-%module skeleton
-%include "src/module_one.h"
-%include "src/module_two.h"
+%module ccq
+%include "src/ccq.h"
 %{
-#include "src/module_one.h"
-#include "src/module_two.h"
+#include "src/ccq.h"
 %}
 
 
