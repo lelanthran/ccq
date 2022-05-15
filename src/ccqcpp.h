@@ -2,6 +2,8 @@
 #ifndef H_CCQCPP
 #define H_CCQCPP
 
+#include <string>
+
 #include <unistd.h>
 
 template<class T> class ccq {
@@ -17,7 +19,7 @@ template<class T> class ccq {
 
       ~ccq () {
          close (this->fds[0]);
-         close (this-fds[1]);
+         close (this->fds[1]);
       }
 
       int post (T *ptr) {

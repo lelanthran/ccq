@@ -3,6 +3,8 @@
 
 #include "concurrentqueue.h"
 
+#include "util.h"
+
 int main (int argc, char **argv)
 {
    (void)argc;
