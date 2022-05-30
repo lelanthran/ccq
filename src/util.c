@@ -32,3 +32,13 @@ util_t *util_new (void)
    return ret;
 }
 
+void util_update (util_t *util)
+{
+   util->mtime = util_clock_now ();
+}
+
+void util_final (util_t *util)
+{
+   util->etime = util_clock_now ();
+}
+
