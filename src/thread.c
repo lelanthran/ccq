@@ -7,15 +7,26 @@
 
 #include"util.h"
 #include "thread.h"
+#include "ccq.h"
+
+void spurious_warnings_suppression (void)
+{
+   // Spurious warnings suppression
+   (void)ccq_init;
+   (void)ccq_shutdown;
+   (void)ccq_wait;
+   (void)ccq_post;
+}
+
 
 void *thread_producer (void *param)
 {
    struct thread_producer_param_t *p = param;
 
-   for (size_t i=0; i<p->counter; i++) {
+   for (size_t i=0; i<p->maxcount; i++) {
       util_t *instance = util_new ();
-      if ((write (p->out_fd, &instance, sizeof instance)) != sizeof instance) {
-         fprintf (stderr, "Write failure producer [%zu], aborting thread\n", i);
+      if ((ccq_post (p->message_queue, instance)) != 0) {
+         fprintf (stderr, "Write failure (producer): [%zu], aborting thread\n", i);
          return NULL;
       }
    }
@@ -31,17 +42,14 @@ void *thread_consumer (void *param)
 
    size_t count = 0;
 
-   while ((read (p->in_fd, &incoming, sizeof incoming)) > 0 &&
-            incoming &&
-            count < p->counter) {
+   while ((incoming = ccq_wait (p->message_queue)) !=0 && count < p->maxcount) {
 
       util_update (incoming);
 
       snprintf (output, sizeof output, "%zu, %zu, %zu\n",
                 count, incoming->ctime, incoming->mtime);
-      size_t outputlen = strlen (output);
 
-      if ((write (p->out_fd, output, outputlen)) < 0) {
+      if ((ccq_post (p->printer_queue, output)) < 0) {
          fprintf (stderr, "Write failure (consumer) [%zu], aborting thread\n",
                   count);
          return NULL;
@@ -53,18 +61,18 @@ void *thread_consumer (void *param)
    return NULL;
 }
 
-
+// Only prints messages shorter than PIPE_BUF
 void *thread_printer (void *param)
 {
-   int *ptr_in_fd = param;
-   static char data[4196];
-   ssize_t nbytes = 0;
+   struct ccq_t *p = param;
+   char *data = NULL;
    int stdoutfd = fileno (stdout);
 
-   while ((nbytes = read (*ptr_in_fd, data, sizeof data)) > 0) {
-      write (stdoutfd, data, nbytes);
+   while ((data = ccq_wait (p))!= NULL) {
+      write (stdoutfd, data, strlen (data));
    }
 
    fprintf (stderr,"Failed to read: %m\n");
    return NULL;
 }
+

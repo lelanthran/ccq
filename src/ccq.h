@@ -8,7 +8,6 @@ struct ccq_t {
    int fds[2];
 };
 
-typedef struct ccq_t ccq_t;
 
 #ifdef __cplusplus
 #define QUALIFIER extern "C" static inline
@@ -17,29 +16,30 @@ typedef struct ccq_t ccq_t;
 #endif
 
 QUALIFIER
-int ccq_init (ccq_t *dst)
+int ccq_init (struct ccq_t *dst)
 {
    return pipe (dst->fds);
 }
 
 QUALIFIER
-void ccq_close (ccq_t *ccq)
+void ccq_shutdown (struct ccq_t *ccq)
 {
    close (ccq->fds[0]);
    close (ccq->fds[1]);
 }
 
 QUALIFIER
-int ccq_post (ccq_t *ccq, void *ptr)
+int ccq_post (struct ccq_t *ccq, void *ptr)
 {
    return write (ccq->fds[1], &ptr, sizeof ptr);
 }
 
 QUALIFIER
-void *ccq_wait (ccq_t *ccq)
+void *ccq_wait (struct ccq_t *ccq)
 {
    void *ret;
-   read (ccq->fds[0], &ret, sizeof ret);
+   if ((read (ccq->fds[0], &ret, sizeof ret)) != 0)
+      return NULL;
    return ret;
 }
 
