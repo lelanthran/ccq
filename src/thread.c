@@ -72,7 +72,7 @@ void *thread_printer (void *param)
       write (stdoutfd, data, strlen (data));
    }
 
-   fprintf (stderr,"Failed to read: %m\n");
+   fprintf (stderr,"Ending printer thread with message: %m\n");
    return NULL;
 }
 

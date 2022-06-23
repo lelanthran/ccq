@@ -43,9 +43,6 @@ int main (int argc, char **argv)
       fprintf (stderr, "Failed to start printer thread\n");
       goto cleanup;
    }
-   // Force context switch so that printer is reader before any consumer is
-   // started.
-   sleep (1);
 
    // Initialise the structures
    struct thread_consumer_param_t *consumer_params =
@@ -60,7 +57,7 @@ int main (int argc, char **argv)
    }
 
 
-   //Create theconsumer threads
+   // Create the consumer threads
    for (int i=0; i<num_consumers; i++) {
       consumer_params[i].message_queue = &message_queue;
       consumer_params[i].printer_queue = &printer_queue;
@@ -68,16 +65,12 @@ int main (int argc, char **argv)
       // Start consumer thread
    }
 
-   sleep (1);
-
    // Create the producer threads
    for (int i=0; i<num_producers; i++) {
       producer_params[i].message_queue = &message_queue;
       producer_params[i].maxcount = loopcount;
       // Start producer thread
    }
-
-   sleep (1);
 
    // Wait for all producers to end.
    for (int i=0; i<num_producers; i++) {
@@ -94,11 +87,18 @@ int main (int argc, char **argv)
       pthread_join (consumer_params[i].tid, NULL);
    }
 
+   // Shutdown the printer thread
+   ccq_post (&printer_queue, NULL);
+   pthread_join (printer_tid, NULL);
+
    ret = EXIT_SUCCESS;
 
 cleanup:
    ccq_shutdown (&message_queue);
    ccq_shutdown (&printer_queue);
+
+   free (consumer_params);
+   free (producer_params);
 
    return ret;
 }
